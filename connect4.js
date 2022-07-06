@@ -21,20 +21,22 @@ startVs.addEventListener('click', (e) => {
 });
 
 function initGame(e) {
-  makeBoard();
+  board = makeBoard();
   makeHtmlBoard();
   e.target.remove();
 }
 
 function makeBoard() {
   // TODO: set "board" to empty HEIGHT x WIDTH matrix array
+  let tempBoard = [];
   for (let r = 0; r < HEIGHT; r++) {
     let tempArr = [];
     for (let c = 0; c < WIDTH; c++) {
       tempArr.push(0);
     }
-    board.push(tempArr);
+    tempBoard.push(tempArr);
   }
+  return tempBoard;
 }
 
 /** makeHtmlBoard: make HTML table and row of column tops. */
@@ -95,7 +97,7 @@ function placeInTable(y, x) {
 function endGame(msg) {
   // TODO: pop up alert message
   alert(msg);
-  document.querySelector('#board').remove();
+  document.querySelector('#board').innerHTML = '';
   const newVS = document.createElement('button');
   newVS.id = 'vs';
   newVS.innerText = 'Start Game';
