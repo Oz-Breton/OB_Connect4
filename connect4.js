@@ -72,7 +72,7 @@ function placeInTable(y, x) {
 
 function endGame(msg) {
   alert(msg);
-  currPlayer = 3;
+  currPlayer = 0;
   const resetBtn = document.createElement('button');
   const body = document.querySelector('body');
   resetBtn.id = 'reset';
@@ -93,7 +93,7 @@ function endGame(msg) {
 }
 
 function handleClick(evt) {
-  if (currPlayer < 3) {
+  if (currPlayer) {
     let x = +evt.target.id;
     let y = findSpotForCol(x);
     if (y === null) {
