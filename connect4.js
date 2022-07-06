@@ -5,6 +5,7 @@
  * board fills (tie)
  */
 
+const startVs = document.querySelector('#vs');
 const WIDTH = 7;
 const HEIGHT = 6;
 
@@ -14,6 +15,16 @@ let board = []; // array of rows, each row is array of cells  (board[r][c])
 /** makeBoard: create in-JS board structure:
  *    board = array of rows, each row is array of cells  (board[y][x])
  */
+
+startVs.addEventListener('click', (e) => {
+  initGame(e);
+});
+
+function initGame(e) {
+  makeBoard();
+  makeHtmlBoard();
+  e.target.remove();
+}
 
 function makeBoard() {
   // TODO: set "board" to empty HEIGHT x WIDTH matrix array
@@ -60,8 +71,8 @@ function makeHtmlBoard() {
 
 function findSpotForCol(x) {
   // TODO: write the real version of this, rather than always returning 0
-  for (let i = HEIGHT-1; i >=0; i--){
-    if (board[i][x] === 0){
+  for (let i = HEIGHT - 1; i >= 0; i--) {
+    if (board[i][x] === 0) {
       return i;
     }
   }
@@ -84,6 +95,15 @@ function placeInTable(y, x) {
 function endGame(msg) {
   // TODO: pop up alert message
   alert(msg);
+  document.querySelector('#board').remove();
+  const newVS = document.createElement('button');
+  newVS.id = 'vs';
+  newVS.innerText = 'Start Game';
+  newVS.addEventListener('click', (e) => {
+    initGame(e);
+  });
+  document.querySelector('body').append(newVS);
+
 }
 
 /** handleClick: handle click of column top to play piece */
@@ -116,7 +136,7 @@ function handleClick(evt) {
 
   // switch players
   // TODO: switch currPlayer 1 <-> 2
-  currPlayer = currPlayer === 1 ? 2: 1;
+  currPlayer = currPlayer === 1 ? 2 : 1;
 }
 
 /** checkForWin: check board cell-by-cell for "does a win start here?" */
@@ -152,6 +172,3 @@ function checkForWin() {
     }
   }
 }
-
-makeBoard();
-makeHtmlBoard();
