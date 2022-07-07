@@ -9,31 +9,52 @@ let board = [];
 let AiActive = false;
 
 function makeAiMove() {
-  const determineAiMove = () =>{
+  const determineAiMove = () => {
     const oppPlayer = 1;
-    const allPossibleMoves = [];
-      for (let i = 0; i < WIDTH; i++){
-        if (typeof findSpotForCol(i) === 'number'){
-          allPossibleMoves.push([findSpotForCol(i),i])
+    const determineAllPossibleMoves = (board) => {
+      let tempArr = [];
+      for (let i = 0; i < WIDTH; i++) {
+        if (typeof findSpotForCol(i, board) === 'number') {
+          tempArr.push([findSpotForCol(i, board), i])
         }
       }
+      return tempArr;
+    }
+    const allPossibleMoves = determineAllPossibleMoves(board);
+    const determineBasicAiMove = (moves, player, board) => {
+      const oppPlayer = player === 1 ? 2 : 1;
+      for (let move of moves) {
+        const tempBoard = structuredClone(board);
+        let [y, x] = move;
+        tempBoard[y][x] = player;
+        if (checkForWin(tempBoard, player)) {
+          return move;
+        }
+      }
+      for (let move of moves) {
+        const tempBoard = structuredClone(board);
+        let [y, x] = move;
+        tempBoard[y][x] = oppPlayer;
+        if (checkForWin(tempBoard, oppPlayer)) {
+          return move;
+        }
+      }
+      return randomElement(moves);
+    }
+    let allReasonableMoves = [];
     for (let move of allPossibleMoves){
       const tempBoard = structuredClone(board);
       let [y, x] = move;
       tempBoard[y][x] = currPlayer;
-      if (checkForWin(tempBoard, currPlayer)){
-        return move;
-      }
-    }
-    for (let move of allPossibleMoves){
-      const tempBoard = structuredClone(board);
-      let [y, x] = move;
+      const oppNextMove = determineBasicAiMove(determineAllPossibleMoves(tempBoard), oppPlayer, tempBoard);
+      [y, x] = oppNextMove;
       tempBoard[y][x] = oppPlayer;
-      if (checkForWin(tempBoard, oppPlayer)){
-        return move;
+      if (!checkForWin(tempBoard, oppPlayer)){
+        allReasonableMoves.push(move);
       }
     }
-    return randomElement(allPossibleMoves);
+    return allReasonableMoves.length > 0 ? determineBasicAiMove(allReasonableMoves, currPlayer, board):
+     determineBasicAiMove(allPossibleMoves, currPlayer, board);
   }
   let [y, x] = determineAiMove();
   board[y][x] = currPlayer;
@@ -49,7 +70,7 @@ function makeAiMove() {
   currPlayer = 1;
 }
 
-function randomElement(arr){
+function randomElement(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
@@ -108,7 +129,7 @@ function makeHtmlBoard() {
   }
 }
 
-function findSpotForCol(x) {
+function findSpotForCol(x, board) {
   for (let i = HEIGHT - 1; i >= 0; i--) {
     if (board[i][x] === 0) {
       return i;
@@ -155,7 +176,7 @@ function createStartButton(ai) {
 function handleClick(evt) {
   if (currPlayer && (!AiActive || currPlayer === 1)) {
     let x = +evt.target.id;
-    let y = findSpotForCol(x);
+    let y = findSpotForCol(x, board);
     if (y === null) {
       return;
     }
