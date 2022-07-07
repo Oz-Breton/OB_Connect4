@@ -1,19 +1,52 @@
 const startVs = document.querySelector('#vs');
+const startAi = document.querySelector('#ai');
+
 const WIDTH = 7;
 const HEIGHT = 6;
 
 let currPlayer = 1;
 let board = [];
+let AiActive = false;
+
+function makeAiMove() {
+  const determineAiMove = () =>{
+    const allPossibleMoves = [];
+      for (let i = 0; i < WIDTH; i++){
+        allPossibleMoves.push([findSpotForCol(i),i])
+      }
+    return allPossibleMoves[0];
+  }
+  let [y, x] = determineAiMove();
+  board[y][x] = currPlayer;
+  placeInTable(y, x);
+  if (checkForWin()) {
+    return endGame('You lost to the AI!');
+  }
+
+  if (board.every(row => row.every(val => val > 0))) {
+    endGame('You Tied!');
+  }
+
+  currPlayer = 1;
+
+}
+
 
 startVs.addEventListener('click', (e) => {
-  initGame(e);
+  initGame(false);
 });
 
-function initGame(e) {
+startAi.addEventListener('click', (e) => {
+  initGame(true);
+});
+
+function initGame(isAI) {
   board = makeBoard();
   makeHtmlBoard();
-  e.target.remove();
+  document.querySelector('#vs').remove();
+  document.querySelector('#ai').remove();
   currPlayer = 1;
+  AiActive = isAI;
 }
 
 function makeBoard() {
@@ -74,26 +107,31 @@ function endGame(msg) {
   alert(msg);
   currPlayer = 0;
   const resetBtn = document.createElement('button');
-  const body = document.querySelector('body');
   resetBtn.id = 'reset';
   resetBtn.innerText = 'Reset the Game';
-  resetBtn.addEventListener('click', () => {
-    resetBtn.remove();
-    document.querySelector('#board').innerHTML = '';
-    const newVS = document.createElement('button');
-    newVS.id = 'vs';
-    newVS.innerText = 'Start Game';
-    newVS.addEventListener('click', (e) => {
-      initGame(e);
-    });
-    body.append(newVS);
+  resetBtn.addEventListener('click', resetGame);
+  document.querySelector('body').append(resetBtn);
+}
 
+function resetGame(e) {
+  e.target.remove();
+  document.querySelector('#board').innerHTML = '';
+  createStartButton(false);
+  createStartButton(true);
+}
+
+function createStartButton(ai) {
+  const tempButton = document.createElement('button');
+  tempButton.id = ai ? 'ai' : 'vs';
+  tempButton.innerText = ai ? 'Start Game vs AI' : 'Start Game vs Human';
+  tempButton.addEventListener('click', () => {
+    initGame(ai);
   });
-  body.append(resetBtn);
+  document.querySelector('body').append(tempButton);
 }
 
 function handleClick(evt) {
-  if (currPlayer) {
+  if (currPlayer && (!AiActive || currPlayer === 1)) {
     let x = +evt.target.id;
     let y = findSpotForCol(x);
     if (y === null) {
@@ -112,6 +150,9 @@ function handleClick(evt) {
     }
 
     currPlayer = currPlayer === 1 ? 2 : 1;
+    if (AiActive) {
+      makeAiMove();
+    }
   }
 }
 
