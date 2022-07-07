@@ -12,9 +12,11 @@ function makeAiMove() {
   const determineAiMove = () =>{
     const allPossibleMoves = [];
       for (let i = 0; i < WIDTH; i++){
-        allPossibleMoves.push([findSpotForCol(i),i])
+        if (typeof findSpotForCol(i) === 'number'){
+          allPossibleMoves.push([findSpotForCol(i),i])
+        }
       }
-    return allPossibleMoves[0];
+    return allPossibleMoves[Math.floor(Math.random() * allPossibleMoves.length)];
   }
   let [y, x] = determineAiMove();
   board[y][x] = currPlayer;
