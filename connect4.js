@@ -1,5 +1,4 @@
-const startVs = document.querySelector('#vs');
-const startAi = document.querySelector('#ai');
+const buttons = document.querySelector('fieldset');
 
 const WIDTH = 7;
 const HEIGHT = 6;
@@ -74,20 +73,19 @@ function randomElement(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-
-startVs.addEventListener('click', (e) => {
-  initGame(false);
-});
-
-startAi.addEventListener('click', (e) => {
-  initGame(true);
+buttons.addEventListener('click', (e) => {
+  if (e.target.id === 'ai'){
+    initGame(true);
+  }
+  else if (e.target.id === 'vs'){
+    initGame(false);
+  }
 });
 
 function initGame(isAI) {
   board = makeBoard();
   makeHtmlBoard();
-  document.querySelector('#vs').remove();
-  document.querySelector('#ai').remove();
+  buttons.className = 'hidden';
   currPlayer = 1;
   AiActive = isAI;
 }
@@ -159,18 +157,7 @@ function endGame(msg) {
 function resetGame(e) {
   e.target.remove();
   document.querySelector('#board').innerHTML = '';
-  createStartButton(false);
-  createStartButton(true);
-}
-
-function createStartButton(ai) {
-  const tempButton = document.createElement('button');
-  tempButton.id = ai ? 'ai' : 'vs';
-  tempButton.innerText = ai ? 'Start Game vs AI' : 'Start Game vs Human';
-  tempButton.addEventListener('click', () => {
-    initGame(ai);
-  });
-  document.querySelector('body').append(tempButton);
+  buttons.className = '';
 }
 
 function handleClick(evt) {
