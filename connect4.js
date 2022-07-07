@@ -3,7 +3,7 @@ const buttons = document.querySelector('fieldset');
 const WIDTH = 7;
 const HEIGHT = 6;
 
-let currPlayer = 1;
+let currPlayer = 0;
 let board = [];
 let AiActive = false;
 
@@ -223,6 +223,14 @@ function determineBasicAiMove(moves, player, board) {
   }
   if (checkForWinningMove(moves, oppPlayer, board)){
     return checkForWinningMove(moves, oppPlayer, board);
+  }
+  const idealMoves = [[HEIGHT-1,(WIDTH-1)/2],[HEIGHT-1, (WIDTH-1)/2-1],[HEIGHT-1,(WIDTH-1)/2+1]];
+  for (let move of moves){
+    for (let iMove of idealMoves){
+      if (JSON.stringify(move) === JSON.stringify(iMove)){
+        return move;
+      }
+    }
   }
   return moves[Math.floor(Math.random() * moves.length)];
 }
