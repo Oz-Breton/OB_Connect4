@@ -8,16 +8,13 @@ let board = [];
 let AiActive = false;
 
 buttons.addEventListener('click', (e) => {
-  if (e.target.id === 'ai') {
-    initGame(true);
-  }
-  else if (e.target.id === 'vs') {
-    initGame(false);
+  if (e.target.type === 'submit') {
+    initGame(e.target.id === 'ai');
   }
 });
 
 function initGame(isAI) {
-  board = makeBoard();
+  makeBoard();
   makeHtmlBoard();
   buttons.className = 'hidden';
   currPlayer = 1;
@@ -25,15 +22,14 @@ function initGame(isAI) {
 }
 
 function makeBoard() {
-  let tempBoard = [];
+  board = [];
   for (let r = 0; r < HEIGHT; r++) {
     let tempArr = [];
     for (let c = 0; c < WIDTH; c++) {
       tempArr.push(0);
     }
-    tempBoard.push(tempArr);
+    board.push(tempArr);
   }
-  return tempBoard;
 }
 
 function makeHtmlBoard() {
@@ -76,8 +72,8 @@ function handleClick(evt) {
       return endGame(`Player ${currPlayer} won!`);
     }
 
-    if (board.every(row => row.every(val => val > 0))) {
-      endGame('You Tied!');
+    if (board.every(row => row.every(val => val))) {
+      return endGame('You Tied!');
     }
 
     currPlayer = currPlayer === 1 ? 2 : 1;
@@ -107,12 +103,15 @@ function placeInTable(y, x) {
   selectedSq.append(newP);
 }
 
-function checkForWin(gameBoard, player) {
+function checkForWin(gameBoard, player, num) {
   if (!player) {
     player = currPlayer;
   }
-  if (!gameBoard){
+  if (!gameBoard) {
     gameBoard = board;
+  }
+  if (!num){
+    num = 4;
   }
   function _win(cells) {
     return cells.every(
@@ -132,7 +131,7 @@ function checkForWin(gameBoard, player) {
       const diagDR = [[y, x], [y + 1, x + 1], [y + 2, x + 2], [y + 3, x + 3]];
       const diagDL = [[y, x], [y + 1, x - 1], [y + 2, x - 2], [y + 3, x - 3]];
 
-      if (_win(horiz) || _win(vert) || _win(diagDR) || _win(diagDL)) {
+      if (_win(horiz.slice(0, num)) || _win(vert.slice(0, num)) || _win(diagDR.slice(0, num)) || _win(diagDL.slice(0, num))) {
         return true;
       }
     }
@@ -171,8 +170,9 @@ function makeAiMove() {
 function determineAiMove() {
   const oppPlayer = 1;
   const allPossibleMoves = determineAllPossibleMoves(board);
-  if (checkForWinningMove(allPossibleMoves, currPlayer, board)){
-    return checkForWinningMove(allPossibleMoves, currPlayer, board)
+  const winningMove = checkForWinningMove(allPossibleMoves, currPlayer, board, 4);
+  if (winningMove) {
+    return winningMove;
   }
   let allReasonableMoves = [];
   for (let move of allPossibleMoves) {
@@ -205,12 +205,12 @@ function determineAllPossibleMoves(board) {
   return tempArr;
 }
 
-function checkForWinningMove(moves, player, board){
+function checkForWinningMove(moves, player, board, num) {
   for (let move of moves) {
     const tempBoard = structuredClone(board);
     let [y, x] = move;
     tempBoard[y][x] = player;
-    if (checkForWin(tempBoard, player)) {
+    if (checkForWin(tempBoard, player, num)) {
       return move;
     }
   }
@@ -218,19 +218,21 @@ function checkForWinningMove(moves, player, board){
 
 function determineBasicAiMove(moves, player, board) {
   const oppPlayer = player === 1 ? 2 : 1;
-  if (checkForWinningMove(moves, player, board)){
-    return checkForWinningMove(moves, player, board);
+  let winningMove = checkForWinningMove(moves, player, board, 4)
+  if (winningMove) {
+    return winningMove;
   }
-  if (checkForWinningMove(moves, oppPlayer, board)){
-    return checkForWinningMove(moves, oppPlayer, board);
+  let oppWinningMove = checkForWinningMove(moves, oppPlayer, board, 4);
+  if (oppWinningMove) {
+    return oppWinningMove;
   }
-  const idealMoves = [[HEIGHT-1,(WIDTH-1)/2],[HEIGHT-1, (WIDTH-1)/2-1],[HEIGHT-1,(WIDTH-1)/2+1]];
-  for (let move of moves){
-    for (let iMove of idealMoves){
-      if (JSON.stringify(move) === JSON.stringify(iMove)){
-        return move;
-      }
-    }
+  let setupMove = checkForWinningMove(moves, player, board, 3);
+  if (setupMove){
+    return setupMove;
+  }
+  let oppSetupMove = checkForWinningMove(moves, oppPlayer, board, 3);
+  if (oppSetupMove){
+    return oppSetupMove;
   }
   return moves[Math.floor(Math.random() * moves.length)];
 }
