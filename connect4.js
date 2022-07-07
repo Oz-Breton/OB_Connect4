@@ -10,30 +10,35 @@ let AiActive = false;
 
 function makeAiMove() {
   const determineAiMove = () =>{
+    const oppPlayer = 1;
     const allPossibleMoves = [];
       for (let i = 0; i < WIDTH; i++){
         if (typeof findSpotForCol(i) === 'number'){
           allPossibleMoves.push([findSpotForCol(i),i])
         }
       }
-    const allWinningMoves = [];
     for (let move of allPossibleMoves){
       const tempBoard = structuredClone(board);
       let [y, x] = move;
       tempBoard[y][x] = currPlayer;
-      if (checkForWin(tempBoard)){
-        allWinningMoves.push(move);
+      if (checkForWin(tempBoard, currPlayer)){
+        return move;
       }
     }
-    if (allWinningMoves.length > 0){
-      return randomElement(allWinningMoves);
+    for (let move of allPossibleMoves){
+      const tempBoard = structuredClone(board);
+      let [y, x] = move;
+      tempBoard[y][x] = oppPlayer;
+      if (checkForWin(tempBoard, oppPlayer)){
+        return move;
+      }
     }
     return randomElement(allPossibleMoves);
   }
   let [y, x] = determineAiMove();
   board[y][x] = currPlayer;
   placeInTable(y, x);
-  if (checkForWin(board)) {
+  if (checkForWin(board, currPlayer)) {
     return endGame('You lost to the AI!');
   }
 
@@ -158,7 +163,7 @@ function handleClick(evt) {
     board[y][x] = currPlayer;
     placeInTable(y, x);
 
-    if (checkForWin(board)) {
+    if (checkForWin(board, currPlayer)) {
       return endGame(`Player ${currPlayer} won!`);
     }
 
@@ -173,7 +178,7 @@ function handleClick(evt) {
   }
 }
 
-function checkForWin(board) {
+function checkForWin(board, player) {
   function _win(cells) {
     return cells.every(
       ([y, x]) =>
@@ -181,7 +186,7 @@ function checkForWin(board) {
         y < HEIGHT &&
         x >= 0 &&
         x < WIDTH &&
-        board[y][x] === currPlayer
+        board[y][x] === player
     );
   }
 
