@@ -7,77 +7,11 @@ let currPlayer = 1;
 let board = [];
 let AiActive = false;
 
-function makeAiMove() {
-  const determineAiMove = () => {
-    const oppPlayer = 1;
-    const determineAllPossibleMoves = (board) => {
-      let tempArr = [];
-      for (let i = 0; i < WIDTH; i++) {
-        if (typeof findSpotForCol(i, board) === 'number') {
-          tempArr.push([findSpotForCol(i, board), i])
-        }
-      }
-      return tempArr;
-    }
-    const allPossibleMoves = determineAllPossibleMoves(board);
-    const determineBasicAiMove = (moves, player, board) => {
-      const oppPlayer = player === 1 ? 2 : 1;
-      for (let move of moves) {
-        const tempBoard = structuredClone(board);
-        let [y, x] = move;
-        tempBoard[y][x] = player;
-        if (checkForWin(tempBoard, player)) {
-          return move;
-        }
-      }
-      for (let move of moves) {
-        const tempBoard = structuredClone(board);
-        let [y, x] = move;
-        tempBoard[y][x] = oppPlayer;
-        if (checkForWin(tempBoard, oppPlayer)) {
-          return move;
-        }
-      }
-      return randomElement(moves);
-    }
-    let allReasonableMoves = [];
-    for (let move of allPossibleMoves){
-      const tempBoard = structuredClone(board);
-      let [y, x] = move;
-      tempBoard[y][x] = currPlayer;
-      const oppNextMove = determineBasicAiMove(determineAllPossibleMoves(tempBoard), oppPlayer, tempBoard);
-      [y, x] = oppNextMove;
-      tempBoard[y][x] = oppPlayer;
-      if (!checkForWin(tempBoard, oppPlayer)){
-        allReasonableMoves.push(move);
-      }
-    }
-    return allReasonableMoves.length > 0 ? determineBasicAiMove(allReasonableMoves, currPlayer, board):
-     determineBasicAiMove(allPossibleMoves, currPlayer, board);
-  }
-  let [y, x] = determineAiMove();
-  board[y][x] = currPlayer;
-  placeInTable(y, x);
-  if (checkForWin(board, currPlayer)) {
-    return endGame('You lost to the AI!');
-  }
-
-  if (board.every(row => row.every(val => val > 0))) {
-    endGame('You Tied!');
-  }
-
-  currPlayer = 1;
-}
-
-function randomElement(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
 buttons.addEventListener('click', (e) => {
-  if (e.target.id === 'ai'){
+  if (e.target.id === 'ai') {
     initGame(true);
   }
-  else if (e.target.id === 'vs'){
+  else if (e.target.id === 'vs') {
     initGame(false);
   }
 });
@@ -127,9 +61,38 @@ function makeHtmlBoard() {
   }
 }
 
-function findSpotForCol(x, board) {
+function handleClick(evt) {
+  if (currPlayer && (!AiActive || currPlayer === 1)) {
+    let x = +evt.target.id;
+    let y = findSpotForCol(x);
+    if (y === null) {
+      return;
+    }
+
+    board[y][x] = currPlayer;
+    placeInTable(y, x);
+
+    if (checkForWin()) {
+      return endGame(`Player ${currPlayer} won!`);
+    }
+
+    if (board.every(row => row.every(val => val > 0))) {
+      endGame('You Tied!');
+    }
+
+    currPlayer = currPlayer === 1 ? 2 : 1;
+    if (AiActive) {
+      setTimeout(makeAiMove, 500);
+    }
+  }
+}
+
+function findSpotForCol(x, gameBoard) {
+  if (!gameBoard) {
+    gameBoard = board;
+  }
   for (let i = HEIGHT - 1; i >= 0; i--) {
-    if (board[i][x] === 0) {
+    if (gameBoard[i][x] === 0) {
       return i;
     }
   }
@@ -144,49 +107,13 @@ function placeInTable(y, x) {
   selectedSq.append(newP);
 }
 
-function endGame(msg) {
-  alert(msg);
-  currPlayer = 0;
-  const resetBtn = document.createElement('button');
-  resetBtn.id = 'reset';
-  resetBtn.innerText = 'Reset the Game';
-  resetBtn.addEventListener('click', resetGame);
-  document.querySelector('body').append(resetBtn);
-}
-
-function resetGame(e) {
-  e.target.remove();
-  document.querySelector('#board').innerHTML = '';
-  buttons.className = '';
-}
-
-function handleClick(evt) {
-  if (currPlayer && (!AiActive || currPlayer === 1)) {
-    let x = +evt.target.id;
-    let y = findSpotForCol(x, board);
-    if (y === null) {
-      return;
-    }
-
-    board[y][x] = currPlayer;
-    placeInTable(y, x);
-
-    if (checkForWin(board, currPlayer)) {
-      return endGame(`Player ${currPlayer} won!`);
-    }
-
-    if (board.every(row => row.every(val => val > 0))) {
-      endGame('You Tied!');
-    }
-
-    currPlayer = currPlayer === 1 ? 2 : 1;
-    if (AiActive) {
-      makeAiMove();
-    }
+function checkForWin(gameBoard, player) {
+  if (!player) {
+    player = currPlayer;
   }
-}
-
-function checkForWin(board, player) {
+  if (!gameBoard){
+    gameBoard = board;
+  }
   function _win(cells) {
     return cells.every(
       ([y, x]) =>
@@ -194,7 +121,7 @@ function checkForWin(board, player) {
         y < HEIGHT &&
         x >= 0 &&
         x < WIDTH &&
-        board[y][x] === player
+        gameBoard[y][x] === player
     );
   }
 
@@ -210,4 +137,92 @@ function checkForWin(board, player) {
       }
     }
   }
+}
+
+function endGame(msg) {
+  alert(msg);
+  currPlayer = 0;
+  const resetBtn = document.createElement('button');
+  resetBtn.id = 'reset';
+  resetBtn.innerText = 'Reset the Game';
+  resetBtn.addEventListener('click', (e) => {
+    e.target.remove();
+    document.querySelector('#board').innerHTML = '';
+    buttons.className = '';
+  });
+  document.querySelector('body').append(resetBtn);
+}
+
+function makeAiMove() {
+  let [y, x] = determineAiMove();
+  board[y][x] = currPlayer;
+  placeInTable(y, x);
+  if (checkForWin()) {
+    return endGame('You lost to the AI!');
+  }
+
+  if (board.every(row => row.every(val => val > 0))) {
+    endGame('You Tied!');
+  }
+
+  currPlayer = 1;
+}
+
+function determineAiMove() {
+  const oppPlayer = 1;
+  const allPossibleMoves = determineAllPossibleMoves(board);
+  if (checkForWinningMove(allPossibleMoves, currPlayer, board)){
+    return checkForWinningMove(allPossibleMoves, currPlayer, board)
+  }
+  let allReasonableMoves = [];
+  for (let move of allPossibleMoves) {
+    const tempBoard = structuredClone(board);
+    let [y, x] = move;
+    tempBoard[y][x] = currPlayer;
+    const oppNextMoves = determineAllPossibleMoves(tempBoard);
+    if (oppNextMoves.length > 0) {
+      const oppNextMove = determineBasicAiMove(oppNextMoves, oppPlayer, tempBoard);
+      [y, x] = oppNextMove;
+      tempBoard[y][x] = oppPlayer;
+      if (!checkForWin(tempBoard, oppPlayer)) {
+        allReasonableMoves.push(move);
+      }
+    }
+  }
+  if (allReasonableMoves.length > 0) {
+    return determineBasicAiMove(allReasonableMoves, currPlayer, board)
+  }
+  return determineBasicAiMove(allPossibleMoves, currPlayer, board);
+}
+
+function determineAllPossibleMoves(board) {
+  let tempArr = [];
+  for (let i = 0; i < WIDTH; i++) {
+    if (typeof findSpotForCol(i, board) === 'number') {
+      tempArr.push([findSpotForCol(i, board), i])
+    }
+  }
+  return tempArr;
+}
+
+function checkForWinningMove(moves, player, board){
+  for (let move of moves) {
+    const tempBoard = structuredClone(board);
+    let [y, x] = move;
+    tempBoard[y][x] = player;
+    if (checkForWin(tempBoard, player)) {
+      return move;
+    }
+  }
+}
+
+function determineBasicAiMove(moves, player, board) {
+  const oppPlayer = player === 1 ? 2 : 1;
+  if (checkForWinningMove(moves, player, board)){
+    return checkForWinningMove(moves, player, board);
+  }
+  if (checkForWinningMove(moves, oppPlayer, board)){
+    return checkForWinningMove(moves, oppPlayer, board);
+  }
+  return moves[Math.floor(Math.random() * moves.length)];
 }
