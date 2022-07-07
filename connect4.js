@@ -1,19 +1,95 @@
 const startVs = document.querySelector('#vs');
+const startAi = document.querySelector('#ai');
+
 const WIDTH = 7;
 const HEIGHT = 6;
 
 let currPlayer = 1;
 let board = [];
+let AiActive = false;
+
+function makeAiMove() {
+  const determineAiMove = () => {
+    const oppPlayer = 1;
+    const determineAllPossibleMoves = (board) => {
+      let tempArr = [];
+      for (let i = 0; i < WIDTH; i++) {
+        if (typeof findSpotForCol(i, board) === 'number') {
+          tempArr.push([findSpotForCol(i, board), i])
+        }
+      }
+      return tempArr;
+    }
+    const allPossibleMoves = determineAllPossibleMoves(board);
+    const determineBasicAiMove = (moves, player, board) => {
+      const oppPlayer = player === 1 ? 2 : 1;
+      for (let move of moves) {
+        const tempBoard = structuredClone(board);
+        let [y, x] = move;
+        tempBoard[y][x] = player;
+        if (checkForWin(tempBoard, player)) {
+          return move;
+        }
+      }
+      for (let move of moves) {
+        const tempBoard = structuredClone(board);
+        let [y, x] = move;
+        tempBoard[y][x] = oppPlayer;
+        if (checkForWin(tempBoard, oppPlayer)) {
+          return move;
+        }
+      }
+      return randomElement(moves);
+    }
+    let allReasonableMoves = [];
+    for (let move of allPossibleMoves){
+      const tempBoard = structuredClone(board);
+      let [y, x] = move;
+      tempBoard[y][x] = currPlayer;
+      const oppNextMove = determineBasicAiMove(determineAllPossibleMoves(tempBoard), oppPlayer, tempBoard);
+      [y, x] = oppNextMove;
+      tempBoard[y][x] = oppPlayer;
+      if (!checkForWin(tempBoard, oppPlayer)){
+        allReasonableMoves.push(move);
+      }
+    }
+    return allReasonableMoves.length > 0 ? determineBasicAiMove(allReasonableMoves, currPlayer, board):
+     determineBasicAiMove(allPossibleMoves, currPlayer, board);
+  }
+  let [y, x] = determineAiMove();
+  board[y][x] = currPlayer;
+  placeInTable(y, x);
+  if (checkForWin(board, currPlayer)) {
+    return endGame('You lost to the AI!');
+  }
+
+  if (board.every(row => row.every(val => val > 0))) {
+    endGame('You Tied!');
+  }
+
+  currPlayer = 1;
+}
+
+function randomElement(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 
 startVs.addEventListener('click', (e) => {
-  initGame(e);
+  initGame(false);
 });
 
-function initGame(e) {
+startAi.addEventListener('click', (e) => {
+  initGame(true);
+});
+
+function initGame(isAI) {
   board = makeBoard();
   makeHtmlBoard();
-  e.target.remove();
+  document.querySelector('#vs').remove();
+  document.querySelector('#ai').remove();
   currPlayer = 1;
+  AiActive = isAI;
 }
 
 function makeBoard() {
@@ -53,7 +129,7 @@ function makeHtmlBoard() {
   }
 }
 
-function findSpotForCol(x) {
+function findSpotForCol(x, board) {
   for (let i = HEIGHT - 1; i >= 0; i--) {
     if (board[i][x] === 0) {
       return i;
@@ -74,28 +150,33 @@ function endGame(msg) {
   alert(msg);
   currPlayer = 0;
   const resetBtn = document.createElement('button');
-  const body = document.querySelector('body');
   resetBtn.id = 'reset';
   resetBtn.innerText = 'Reset the Game';
-  resetBtn.addEventListener('click', () => {
-    resetBtn.remove();
-    document.querySelector('#board').innerHTML = '';
-    const newVS = document.createElement('button');
-    newVS.id = 'vs';
-    newVS.innerText = 'Start Game';
-    newVS.addEventListener('click', (e) => {
-      initGame(e);
-    });
-    body.append(newVS);
+  resetBtn.addEventListener('click', resetGame);
+  document.querySelector('body').append(resetBtn);
+}
 
+function resetGame(e) {
+  e.target.remove();
+  document.querySelector('#board').innerHTML = '';
+  createStartButton(false);
+  createStartButton(true);
+}
+
+function createStartButton(ai) {
+  const tempButton = document.createElement('button');
+  tempButton.id = ai ? 'ai' : 'vs';
+  tempButton.innerText = ai ? 'Start Game vs AI' : 'Start Game vs Human';
+  tempButton.addEventListener('click', () => {
+    initGame(ai);
   });
-  body.append(resetBtn);
+  document.querySelector('body').append(tempButton);
 }
 
 function handleClick(evt) {
-  if (currPlayer) {
+  if (currPlayer && (!AiActive || currPlayer === 1)) {
     let x = +evt.target.id;
-    let y = findSpotForCol(x);
+    let y = findSpotForCol(x, board);
     if (y === null) {
       return;
     }
@@ -103,7 +184,7 @@ function handleClick(evt) {
     board[y][x] = currPlayer;
     placeInTable(y, x);
 
-    if (checkForWin()) {
+    if (checkForWin(board, currPlayer)) {
       return endGame(`Player ${currPlayer} won!`);
     }
 
@@ -112,10 +193,13 @@ function handleClick(evt) {
     }
 
     currPlayer = currPlayer === 1 ? 2 : 1;
+    if (AiActive) {
+      makeAiMove();
+    }
   }
 }
 
-function checkForWin() {
+function checkForWin(board, player) {
   function _win(cells) {
     return cells.every(
       ([y, x]) =>
@@ -123,7 +207,7 @@ function checkForWin() {
         y < HEIGHT &&
         x >= 0 &&
         x < WIDTH &&
-        board[y][x] === currPlayer
+        board[y][x] === player
     );
   }
 
