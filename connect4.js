@@ -5,7 +5,7 @@ const HEIGHT = 6;
 
 let currPlayer = 0;
 let board = [];
-let AiActive = false;
+let aiActive = false;
 
 buttons.addEventListener('click', (e) => {
   if (e.target.type === 'submit') {
@@ -18,7 +18,7 @@ function initGame(isAI) {
   makeHtmlBoard();
   buttons.className = 'hidden';
   currPlayer = 1;
-  AiActive = isAI;
+  aiActive = isAI;
 }
 
 function makeBoard() {
@@ -58,7 +58,7 @@ function makeHtmlBoard() {
 }
 
 function handleClick(evt) {
-  if (currPlayer && (!AiActive || currPlayer === 1)) {
+  if (currPlayer && (!aiActive || currPlayer === 1)) {
     let x = +evt.target.id;
     let y = findSpotForCol(x);
     if (y === null) {
@@ -77,16 +77,13 @@ function handleClick(evt) {
     }
 
     currPlayer = currPlayer === 1 ? 2 : 1;
-    if (AiActive) {
+    if (aiActive) {
       setTimeout(makeAiMove, 500);
     }
   }
 }
 
-function findSpotForCol(x, gameBoard) {
-  if (!gameBoard) {
-    gameBoard = board;
-  }
+function findSpotForCol(x, gameBoard = board) {
   for (let i = HEIGHT - 1; i >= 0; i--) {
     if (gameBoard[i][x] === 0) {
       return i;
@@ -99,20 +96,10 @@ function placeInTable(y, x) {
   const newP = document.createElement('div');
   newP.classList.add('piece');
   newP.classList.add(currPlayer === 1 ? 'p1' : 'p2');
-  const selectedSq = document.getElementById(y + '-' + x);
-  selectedSq.append(newP);
+  document.getElementById(y + '-' + x).append(newP);
 }
 
-function checkForWin(gameBoard, player, num) {
-  if (!player) {
-    player = currPlayer;
-  }
-  if (!gameBoard) {
-    gameBoard = board;
-  }
-  if (!num){
-    num = 4;
-  }
+function checkForWin(gameBoard = board, player = currPlayer, num = 4) {
   function _win(cells) {
     return cells.every(
       ([y, x]) =>
@@ -170,7 +157,7 @@ function makeAiMove() {
 function determineAiMove() {
   const oppPlayer = 1;
   const allPossibleMoves = determineAllPossibleMoves(board);
-  const winningMove = checkForWinningMove(allPossibleMoves, currPlayer, board, 4);
+  const winningMove = checkForWinningMove(allPossibleMoves);
   if (winningMove) {
     return winningMove;
   }
@@ -205,9 +192,9 @@ function determineAllPossibleMoves(board) {
   return tempArr;
 }
 
-function checkForWinningMove(moves, player, board, num) {
+function checkForWinningMove(moves, player = currPlayer, gameBoard = board, num = 4) {
   for (let move of moves) {
-    const tempBoard = structuredClone(board);
+    const tempBoard = structuredClone(gameBoard);
     let [y, x] = move;
     tempBoard[y][x] = player;
     if (checkForWin(tempBoard, player, num)) {
@@ -218,21 +205,15 @@ function checkForWinningMove(moves, player, board, num) {
 
 function determineBasicAiMove(moves, player, board) {
   const oppPlayer = player === 1 ? 2 : 1;
-  let winningMove = checkForWinningMove(moves, player, board, 4)
-  if (winningMove) {
-    return winningMove;
-  }
-  let oppWinningMove = checkForWinningMove(moves, oppPlayer, board, 4);
-  if (oppWinningMove) {
-    return oppWinningMove;
-  }
-  let setupMove = checkForWinningMove(moves, player, board, 3);
-  if (setupMove){
-    return setupMove;
-  }
-  let oppSetupMove = checkForWinningMove(moves, oppPlayer, board, 3);
-  if (oppSetupMove){
-    return oppSetupMove;
+  for (let i = 4; i >= 2; i--) {
+    let winningMove = checkForWinningMove(moves, player, board, i)
+    if (winningMove) {
+      return winningMove;
+    }
+    let oppWinningMove = checkForWinningMove(moves, oppPlayer, board, i);
+    if (oppWinningMove) {
+      return oppWinningMove;
+    }
   }
   return moves[Math.floor(Math.random() * moves.length)];
 }
