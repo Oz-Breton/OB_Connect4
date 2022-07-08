@@ -157,9 +157,9 @@ function makeAiMove() {
 function determineAiMove() {
   const oppPlayer = 1;
   const allPossibleMoves = determineAllPossibleMoves(board);
-  const winningMove = checkForWinningMove(allPossibleMoves);
-  if (winningMove) {
-    return winningMove;
+  const winningMove = checkForWinningMoves(allPossibleMoves);
+  if (winningMove.length > 0) {
+    return winningMove[0];
   }
   let allReasonableMoves = [];
   for (let move of allPossibleMoves) {
@@ -192,28 +192,34 @@ function determineAllPossibleMoves(board) {
   return tempArr;
 }
 
-function checkForWinningMove(moves, player = currPlayer, gameBoard = board, num = 4) {
+function checkForWinningMoves(moves, player = currPlayer, gameBoard = board, num = 4) {
+  let winningMoves = [];
   for (let move of moves) {
     const tempBoard = structuredClone(gameBoard);
     let [y, x] = move;
     tempBoard[y][x] = player;
     if (checkForWin(tempBoard, player, num)) {
-      return move;
+      winningMoves.push(move);
     }
   }
+  return winningMoves;
 }
 
 function determineBasicAiMove(moves, player, board) {
   const oppPlayer = player === 1 ? 2 : 1;
   for (let i = 4; i >= 2; i--) {
-    let winningMove = checkForWinningMove(moves, player, board, i)
-    if (winningMove) {
-      return winningMove;
+    let winningMoves = checkForWinningMoves(moves, player, board, i)
+    if (winningMoves.length > 0) {
+      return randomElement(winningMoves);
     }
-    let oppWinningMove = checkForWinningMove(moves, oppPlayer, board, i);
-    if (oppWinningMove) {
-      return oppWinningMove;
+    let oppWinningMoves = checkForWinningMoves(moves, oppPlayer, board, i);
+    if (oppWinningMoves.length > 0) {
+      return randomElement(oppWinningMoves);
     }
   }
-  return moves[Math.floor(Math.random() * moves.length)];
+  return randomElement(moves);
+}
+
+function randomElement(arr) {
+  return arr[Math.floor(Math.random() * arr.length)]
 }
