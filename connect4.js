@@ -1,10 +1,14 @@
+//each individual game obj is its own c4 game, with its own board and players
+//game accepts 3 parameters:
+//id is the id of the board, each Game must have a unique id and it must selectable by CSS
+//WIDTH and HEIGHT are the dimensions of the gameboard, should leave as default
 class Game {
   constructor(id = 'First', WIDTH = 7, HEIGHT = 6) {
     this.WIDTH = WIDTH;
     this.HEIGHT = HEIGHT;
     this.currPlayer = 0;
     this.board = [];
-    this.buttons = this.createStartButtons();
+    this.buttons = this.createStartButtons(); //the fieldset that contains buttons to start the game
     this.htmlBoard = document.createElement('table');
     this.htmlBoard.id = id;
     this.id = id;
@@ -12,15 +16,15 @@ class Game {
     this.player1 = {};
     this.player2 = {};
   }
-  createStartButtons() {
+  createStartButtons() { //creates an HTML fieldset containing two buttons
     const buttons = document.createElement('fieldset');
     const legend = document.createElement('legend');
     legend.innerText = 'Select Your Mode';
     buttons.append(legend)
-    const vsBtn = document.createElement('button');
+    const vsBtn = document.createElement('button'); //this button creates a PVP match
     vsBtn.id = 'vs';
     vsBtn.innerText = 'vs Human';
-    const aiBtn = document.createElement('button');
+    const aiBtn = document.createElement('button'); //this button creates a PVE match
     aiBtn.id = 'ai';
     aiBtn.innerText = 'vs AI';
     buttons.append(vsBtn)
@@ -171,8 +175,6 @@ class Game {
   }
 }
 
-const connectFour = new Game();
-
 class Player {
   constructor(num, color, isAI, game) {
     this.num = num;
@@ -260,3 +262,5 @@ class Player {
 function randomElement(arr) {
   return arr[Math.floor(Math.random() * arr.length)]
 }
+
+const connectFour = new Game();
